@@ -1,2 +1,16 @@
-*.class
+# sbt
+bin/
+project/
+target/
+build/
+
+# intellij
 *.log
+*.iml
+*.ipr
+*.iws
+.idea
+*.class
+
+# mac
+.DS_Store
