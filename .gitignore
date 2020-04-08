@@ -11,6 +11,10 @@ build/
 *.iws
 .idea
 *.class
+*.bloop
+*.metals
 
 # mac
 .DS_Store
+
+.bloop/bloop.settings.json
