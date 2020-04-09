@@ -1,5 +1,7 @@
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.SparkContext
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types.{DateType}
 
 case class Ticket(
     plate_id      : String,
@@ -14,8 +16,10 @@ object importCSV {
       
     val spark = SparkSession.builder
     .appName("drone-project")
-    .master("local")
+    .master("local[*]")
     .getOrCreate()
+
+    import spark.implicits._
 
     val sc = spark.sparkContext
     val filename = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/Parking_Violations_Issued_-_Fiscal_Year_2017.csv"
@@ -23,6 +27,12 @@ object importCSV {
     // we get the RDD[String] containing the data of the file
     val (access_tickets) = parseTickets(filename, sc)
 
+    val df_small = access_tickets.toDF("Plate ID", "Issue Date", "Violation Code", "Violation Time")
+    
+    violationCountDF(df_small).show()
+    recidivistCountDF(df_small).show()
+    dayCountDF(df_small).show()
+    violationsPerDay(df_small, "07/20/2016").show()
     spark.stop()
   }
 
@@ -46,7 +56,22 @@ object importCSV {
     println(s"Read ${access_tickets.count()} lines")
     (access_tickets)
   }
-      
+
+  def violationCountDF(violationListDF : DataFrame) = {
+    violationListDF.groupBy("Violation Code").count
+  }
+
+  def recidivistCountDF(violationListDF : DataFrame) = {
+    violationListDF.groupBy("Plate ID").count
+  }
+
+  def dayCountDF(violationListDF : DataFrame) = {
+    violationListDF.groupBy("Issue Date").count
+  }
+
+  def violationsPerDay(violationListDF : DataFrame, DateSearched : String) = {
+    violationListDF.filter(violationListDF("Issue Date") === DateSearched)
+  }
 }
 
 
