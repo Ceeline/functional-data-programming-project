@@ -22,8 +22,8 @@ object importDroneCSV extends App{
  
 
 
-  rdd.foreach(f=>{
-    println(f)
+  rdd.foreach(f => {
+    println(f.mkString(" "))
   })
 
   println("the total number of row including headers is " + rdd.count)

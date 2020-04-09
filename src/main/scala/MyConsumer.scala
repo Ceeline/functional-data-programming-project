@@ -12,7 +12,7 @@ import au.com.bytecode.opencsv.CSVWriter
 
 object MyConsumer extends App {
 
-   println("I cons")
+   println("I consume")
   val gson = new Gson()
 
   val exist = Files.exists(Paths.get("output.csv"))
@@ -20,16 +20,16 @@ object MyConsumer extends App {
 
   var outputMsgFile = new BufferedWriter(new FileWriter("output.csv", true))
   var outputImageFile = new BufferedWriter(new FileWriter("image.csv", true))
-  val csvMsgWriter = new CSVWriter(outputMsgFile, ',','"','\u0000',"\n")
-  val csvImageWriter = new CSVWriter(outputImageFile, ',','"','\u0000',"\n")
+  val csvMsgWriter = new CSVWriter(outputMsgFile, ',','\u0000','\u0000',"\n")
+  val csvImageWriter = new CSVWriter(outputImageFile, ',','\u0000','\u0000',"\n")
 
   if(exist == false){
-    val csvFields = Array("id_Drone", "date","time", "latitude", "longitude","id_image", "violationCode", "id_plate")
-    csvMsgWriter.writeNext(csvFields.mkString("\",\""))
+    val csvFields = Array("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
+    csvMsgWriter.writeNext(csvFields.mkString(","))
   }
   if(existImage == false){
     val csvFields = Array("id_image","image")
-    csvImageWriter.writeNext(csvFields.mkString("\",\""))
+    csvImageWriter.writeNext(csvFields.mkString(","))
   }
   
 
@@ -56,7 +56,7 @@ object MyConsumer extends App {
           if(dronemsg != null && dronemsg.violationCode == -1){
             //The drone sends a Image
             var imageRecord = Array(dronemsg.id_image, dronemsg.image)
-            csvImageWriter.writeNext(imageRecord.mkString("\",\""))
+            csvImageWriter.writeNext(imageRecord.mkString(","))
           }else  {
             if(dronemsg != null && dronemsg.violationCode == 1){
             //The drone sends an alert
@@ -65,7 +65,7 @@ object MyConsumer extends App {
 
 
             // We write the message in the csv
-            val recordArrayString = dronemsg.toArray().mkString("\",\"")
+            val recordArrayString = dronemsg.toArray().mkString(",")
             csvMsgWriter.writeNext(recordArrayString)
         }
         i = i + 1
