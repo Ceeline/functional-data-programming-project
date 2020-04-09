@@ -1,35 +1,115 @@
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{TimestampType, IntegerType, StringType, StructField, StructType}
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
-import java.io.{FileNotFoundException, IOException}
-import java.text.SimpleDateFormat
-import java.{util => ju}
-import java.text.ParseException
+import org.apache.spark.SparkContext
+
+case class Ticket(
+    plate_id      : String,
+    issue_date    : String,
+    violation_code: Int,
+    violation_time: String
+)
 
 object importCSV {
     
-    def main(args: Array[String]): Unit = {
-      println("Plate ID, Issue Date, Violation Code, Violation Time")
+  def main(args: Array[String]): Unit = {
       
-      // each row is an array of strings (the columns in the csv file)
+    val spark = SparkSession.builder
+    .appName("drone-project")
+    .master("local")
+    .getOrCreate()
+
+    val sc = spark.sparkContext
+    val filename = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/Parking_Violations_Issued_-_Fiscal_Year_2017.csv"
+    
+    // we get the RDD[String] containing the data of the file
+    val (access_tickets) = parseTickets(filename, sc)
+
+    spark.stop()
+  }
+
+  import org.apache.spark.rdd.RDD
+
+  def parseTickets(filename: String, sc: SparkContext): RDD[Ticket] = {
+
+    // Read and parse file 
+    val access_tickets : RDD[Ticket] = sc
+                      .textFile(filename)
+                      .map(_.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1))      // split at each comma except commas in quotes
+                      .map(x => {   // sorting: put 0 when not well-structured and 1 when valid
+                        if (x(1).equals("Plate ID") || x(1).contains(',') || x(4).contains(',') || x(19).contains(','))
+                          (x, 0)
+                        else
+                          (Ticket(x(1), x(4), x(5).toInt, x(19)),1)
+                      })
+                      .filter(s => s._2 == 1)   // only keep valid lines
+                      .map(s => s._1.asInstanceOf[Ticket])      //return RDD[Tickets]
+
+    println(s"Read ${access_tickets.count()} lines")
+    (access_tickets)
+  }
+      
+}
+
+
+// Scala: début de code
+/*
+// each row is an array of strings (the columns in the csv file)
       // val rows = ArrayBuffer[Array[(String, ju.Date, Int, String)]]()
       val rows = ArrayBuffer[Array[(String, String, Int, String)]]()
-      // val rows = ArrayBuffer[Array[String]]()
-      val filepath = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/Parking_Violations_Issued_-_Fiscal_Year_2017.csv"
 
-      try {
+      val filepath = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/Parking_Violations_Issued_-_Fiscal_Year_2017.csv"
+      // val filepath = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/test.csv"
+
+*/
+// fonctionnel mais donne un iterator et fonction toArray fait planter programme car surcharge
+/*
+try {
+        val bufferedSource = Source.fromFile(filepath)
+        
+        val cols = bufferedSource.getLines.drop(1).map(_.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)).map(x => (x(1),x(4),x(5).toInt,x(19)))
+        bufferedSource.close
+        
+      } catch {
+        case e: FileNotFoundException => println("Couldn't find that file.")
+        case e: IOException => println("Got an IOException!")
+      }
+      */
+
+// Error out of memory
+/*
+      using(Source.fromFile(filepath)) { source =>
+        source.getLines.drop(1).foreach{ line =>
+          val cols = line.split(",").map(_.trim)
+
+          try {
+            rows += Array[(String, String, Int, String)]((cols(1),cols(4),cols(5).toInt,cols(19)))
+          } catch {
+            case e: NumberFormatException =>
+          }
+        }
+      }
+
+      def using[A <: { def close(): Unit }, B](resource: A)(f: A => B): B =
+        try {
+          f(resource)
+        } finally {
+          resource.close()
+        }
+*/
+
+// Error out of memory
+/*
+try {
         val bufferedSource = Source.fromFile(filepath)
         
         bufferedSource.getLines.drop(1).foreach{ line =>
           
           val cols = line.split(",").map(_.trim)
-            
+          // println ("cols: " + s"${cols(1)}|${cols(2)}|${cols(3)}|${cols(4)}")  
           // we add the columns to the array
           try {
             rows += Array[(String, String, Int, String)]((cols(1),cols(4),cols(5).toInt,cols(19)))
           } catch {
-            case e: NumberFormatException => println("error: " + s"${cols(1)}|${cols(4)}|${cols(5)}|${cols(19)}")
+            case e: NumberFormatException =>
           }
           /*
           val format = new java.text.SimpleDateFormat("dd/MM/yyyy")
@@ -48,10 +128,9 @@ object importCSV {
         case e: FileNotFoundException => println("Couldn't find that file.")
         case e: IOException => println("Got an IOException!")
       }
-      
-  }
+*/
 
-}
+
 // fonctionnel: output = FEJ5121|05/18/2017|38|0532P
             /* val cols = line.split(",").map(_.trim)
             println(s"${cols(1)}|${cols(4)}|${cols(5)}|${cols(19)}")*/
