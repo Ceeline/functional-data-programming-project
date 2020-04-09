@@ -34,6 +34,8 @@ object importCSV {
     recidivistCountDF(df_small).show()
     dayCountDF(df_small).show()
     violationsPerDay(df_small, "07/20/2016").show()
+    violationPerHours(df_small, 2, 6).orderBy("Violation Time").show() //to show the violations made between 2H and 6H
+    violationPerHours(df_small, 15, 20).orderBy("Violation Time").show() //to show the violations made between 15H and 20H
     spark.stop()
   }
 
@@ -76,6 +78,25 @@ object importCSV {
   // Filter to only see the violations made at a specific date
   def violationsPerDay(violationListDF : DataFrame, DateSearched : String) = {
     violationListDF.filter(violationListDF("Issue Date") === DateSearched)
+  }
+    
+  // Function to filter the violations made at a specific time (during 2 hours defined by the user)
+  def violationPerHours(violationListDF : DataFrame, BeginningHour : Int, EndingHour : Int) = {
+    if (BeginningHour <= 12) {
+      val timeOfDay = violationListDF.filter(violationListDF("Violation Time").endsWith("A")) //We check that it is during the night/morning (AM)
+      timeOfDay
+        .filter(timeOfDay("Violation Time").substr(0,2) >= BeginningHour) //We filter so that the hours is greater than the beginning hour
+        .filter(timeOfDay("Violation Time").substr(0,2) < EndingHour) // We filter so that the hours are smaller than the ending hour
+    }else {
+      // if the values are greater than 12H, we are in the afternoon/night so we are in PM (and we substract 12 to go back english hours)
+      val BeginningHourAfter = BeginningHour - 12
+      val EndingHourAfter = EndingHour - 12
+
+      val timeOfDay = violationListDF.filter(violationListDF("Violation Time").endsWith("P")) //We check that it is during the afternoon/night (PM)
+      timeOfDay
+        .filter(timeOfDay("Violation Time").substr(0,2) >= BeginningHourAfter) //We filter so that the hours is greater than the beginning hour
+        .filter(timeOfDay("Violation Time").substr(0,2) < EndingHourAfter) // We filter so that the hours are smaller than the ending hour
+    }
   }
 }
 
