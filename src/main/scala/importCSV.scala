@@ -29,6 +29,7 @@ object importCSV {
 
     val df_small = access_tickets.toDF("Plate ID", "Issue Date", "Violation Code", "Violation Time")
     
+    // we show the result of the statistics
     violationCountDF(df_small).show()
     recidivistCountDF(df_small).show()
     dayCountDF(df_small).show()
@@ -57,18 +58,22 @@ object importCSV {
     (access_tickets)
   }
 
+  // Compute the number of each violation code
   def violationCountDF(violationListDF : DataFrame) = {
-    violationListDF.groupBy("Violation Code").count
+    violationListDF.groupBy("Violation Code").count //we group by violation code and count how many iteration we have of each code
   }
 
+  // Compute the number of time a plate ID reoffended
   def recidivistCountDF(violationListDF : DataFrame) = {
-    violationListDF.groupBy("Plate ID").count
+    violationListDF.groupBy("Plate ID").count //we group by plate ID and count how many iteration we have of each plate ID
   }
 
+  // Compute the number of violation that were made each day
   def dayCountDF(violationListDF : DataFrame) = {
-    violationListDF.groupBy("Issue Date").count
+    violationListDF.groupBy("Issue Date").count //we group by the date and count how many iteration we have of each date
   }
 
+  // Filter to only see the violations made at a specific date
   def violationsPerDay(violationListDF : DataFrame, DateSearched : String) = {
     violationListDF.filter(violationListDF("Issue Date") === DateSearched)
   }
