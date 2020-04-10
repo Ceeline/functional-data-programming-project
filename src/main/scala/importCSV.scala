@@ -10,6 +10,16 @@ case class Ticket(
     violation_time: String
 )
 
+case class Drone(
+  id_Drone: Integer, 
+  date: String, 
+  time : String, 
+  latitude: Double, 
+  longitude: Double, 
+  id_image: String, 
+  violationCode: Integer, 
+  id_plate: String)
+
 object importCSV {
     
   def main(args: Array[String]): Unit = {
@@ -22,10 +32,10 @@ object importCSV {
     import spark.implicits._
 
     val sc = spark.sparkContext
-    //val filename = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/Parking_Violations_Issued_-_Fiscal_Year_2017.csv"
+    val filename = "/home/celia/Downloads/test.csv"
     
     // we get the RDD[String] containing the data of the file
-    //val (access_tickets) = parseTickets(filename, sc)
+    val (access_tickets) = parseTickets(filename, sc)
     
 
     val rddCSV = spark.sparkContext.textFile("violationDrone.csv")
@@ -42,21 +52,23 @@ object importCSV {
 
 
 
-
-    val df_small_drone = rdd.toDF("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
+   /* val df_small_drone = rdd.toDF("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
     
     violationCountDF(df_small_drone).show()
     recidivistCountDF(df_small_drone).show()
     dayCountDF(df_small_drone).show()
     violationsPerDay(df_small_drone, "07/20/2016").show()
+    violationPerHours(df_small, 2, 6).orderBy("Violation Time").show()
+    violationPerHours(df_small, 15, 20).orderBy("Violation Time").show()
+    */
 
 
-    /*val df_small = access_tickets.toDF("Plate ID", "Issue Date", "Violation Code", "Violation Time")
+    val df_small = access_tickets.toDF("Plate ID", "Issue Date", "Violation Code", "Violation Time")
     
     violationCountDF(df_small).show()
     recidivistCountDF(df_small).show()
     dayCountDF(df_small).show()
-    violationsPerDay(df_small, "07/20/2016").show()*/
+    violationsPerDay(df_small, "07/20/2016").show()
     spark.stop()
   }
 
@@ -81,6 +93,25 @@ object importCSV {
     (access_tickets)
   }
 
+    /*def parseDrones(filename: String, sc: SparkContext): RDD[Drone] = {
+
+    // Read and parse file 
+    val drone : RDD[Drone] = sc
+                      .textFile(filename)
+                      .map(_.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1))      // split at each comma except commas in quotes
+                      .map(x => {   // sorting: put 0 when not well-structured and 1 when valid
+                        if (x(1).equals("Plate ID") || x(1).contains(',') || x(4).contains(',') || x(19).contains(','))
+                          (x, 0)
+                        else
+                          (Ticket(x(1), x(4), x(5).toInt, x(19)),1)
+                      })
+                      .filter(s => s._2 == 1)   // only keep valid lines
+                      .map(s => s._1.asInstanceOf[Ticket])      //return RDD[Tickets]
+
+    println(s"Read ${access_tickets.count()} lines")
+    (access_tickets)
+  }*/
+
   def violationCountDF(violationListDF : DataFrame) = {
     violationListDF.groupBy("Violation Code").count
   }
@@ -95,6 +126,23 @@ object importCSV {
 
   def violationsPerDay(violationListDF : DataFrame, DateSearched : String) = {
     violationListDF.filter(violationListDF("Issue Date") === DateSearched)
+  }
+
+  def violationPerHours(violationListDF : DataFrame, BeginningHour : Int, EndingHour : Int) = {
+    if (BeginningHour <= 12) {
+      val timeOfDay = violationListDF.filter(violationListDF("Violation Time").endsWith("A"))
+      timeOfDay
+        .filter(timeOfDay("Violation Time").substr(0,2) >= BeginningHour)
+        .filter(timeOfDay("Violation Time").substr(0,2) < EndingHour)
+    }else {
+      val BeginningHourAfter = BeginningHour - 12
+      val EndingHourAfter = EndingHour - 12
+
+      val timeOfDay = violationListDF.filter(violationListDF("Violation Time").endsWith("P"))
+      timeOfDay
+        .filter(timeOfDay("Violation Time").substr(0,2) >= BeginningHourAfter)
+        .filter(timeOfDay("Violation Time").substr(0,2) < EndingHourAfter)
+    }
   }
 }
 
