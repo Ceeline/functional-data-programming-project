@@ -6,12 +6,12 @@ import com.google.gson.Gson
 object MyProducer extends App {
 
   println("I produce")
-  val droneMsg = Array(new DroneMessage(1, "01-01-1999", "0812A", 34.007623,-118.499757,null,"1243Y", 0, "BC-197-PO"),
-                       new DroneMessage(3, "01-01-1999", "0913A", 34.002348,-118.499757,null,null, null, null),
-                       new DroneMessage(2, "01-01-1999", "0815A", 34.007648,-118.499757,null,"1283Y", 1, "BG-193-HO"),
-                       new DroneMessage(1, "01-01-1999", "1012A", 34.003248,-118.499757,null,"1293Y", 2, "BH-197-XO"),
-                       new DroneMessage(1, "01-01-1999", "1012A", 34.003248,-118.499757,ImageStr.getImage(),"1243Y", -1, ""),
-                       new DroneMessage(2, "01-01-1999", "1512A", 34.007632,-118.499757,null,null, null, null))
+  val droneMsg = Array(new DroneMessage(1, "07/20/2016", "0812A", 34.007623,-118.499757,null,"1243Y", 0, "BC-197-PO"),
+                       new DroneMessage(3, "07/20/2016", "0913A", 34.002348,-118.499757,null,null, null, null),
+                       new DroneMessage(2, "07/20/2016", "0815A", 34.007648,-118.499757,null,"1283Y", -2,null),
+                       new DroneMessage(1, "07/20/2016", "1012A", 34.003248,-118.499757,null,"1293Y", 2, "BH-197-XO"),
+                       new DroneMessage(1, "07/20/2016", "1012A", 34.003248,-118.499757,ImageStr.getImage(),"1243Y", -1, ""),
+                       new DroneMessage(2, "07/20/2016", "1512A", 34.007632,-118.499757,null,null, null, null))
 
      
   val gson = new Gson()

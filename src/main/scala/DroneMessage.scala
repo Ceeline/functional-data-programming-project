@@ -3,7 +3,7 @@ case class DroneMessage(id_Drone: Integer, date: String, time : String, latitude
   
   def toArray() : Array[String] = {
       if(violationCode == null){
-          return Array(id_Drone.toString, date, time, latitude.toString,longitude.toString,"","","")
+          return Array(id_Drone.toString, date, time, latitude.toString,longitude.toString)
       }
     return Array(id_Drone.toString, date, time, latitude.toString,longitude.toString, id_image, violationCode.toString,id_plate)
   }

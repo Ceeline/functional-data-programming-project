@@ -22,20 +22,41 @@ object importCSV {
     import spark.implicits._
 
     val sc = spark.sparkContext
-    val filename = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/Parking_Violations_Issued_-_Fiscal_Year_2017.csv"
+    //val filename = "/home/celine/Documents/fonctionnal_data_programming/nyc-parking-tickets/Parking_Violations_Issued_-_Fiscal_Year_2017.csv"
     
     // we get the RDD[String] containing the data of the file
-    val (access_tickets) = parseTickets(filename, sc)
-
-    val df_small = access_tickets.toDF("Plate ID", "Issue Date", "Violation Code", "Violation Time")
+    //val (access_tickets) = parseTickets(filename, sc)
     
-    // we show the result of the statistics
+
+    val rddCSV = spark.sparkContext.textFile("violationDrone.csv")
+
+    // type of val RDD :class org.apache.spark.rdd.MapPartitionsRDD
+    // We can use this RDD to make statistics
+    val rdd = rddCSV.map(line=>{
+      line.split(",")
+    })
+
+    rdd.foreach(f => {
+      println(f.mkString(" "))
+    })
+
+
+
+
+    val df_small_drone = rdd.toDF("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
+    
+    violationCountDF(df_small_drone).show()
+    recidivistCountDF(df_small_drone).show()
+    dayCountDF(df_small_drone).show()
+    violationsPerDay(df_small_drone, "07/20/2016").show()
+
+
+    /*val df_small = access_tickets.toDF("Plate ID", "Issue Date", "Violation Code", "Violation Time")
+    
     violationCountDF(df_small).show()
     recidivistCountDF(df_small).show()
     dayCountDF(df_small).show()
-    violationsPerDay(df_small, "07/20/2016").show()
-    violationPerHours(df_small, 2, 6).orderBy("Violation Time").show() //to show the violations made between 2H and 6H
-    violationPerHours(df_small, 15, 20).orderBy("Violation Time").show() //to show the violations made between 15H and 20H
+    violationsPerDay(df_small, "07/20/2016").show()*/
     spark.stop()
   }
 
@@ -60,43 +81,20 @@ object importCSV {
     (access_tickets)
   }
 
-  // Compute the number of each violation code
   def violationCountDF(violationListDF : DataFrame) = {
-    violationListDF.groupBy("Violation Code").count //we group by violation code and count how many iteration we have of each code
+    violationListDF.groupBy("Violation Code").count
   }
 
-  // Compute the number of time a plate ID reoffended
   def recidivistCountDF(violationListDF : DataFrame) = {
-    violationListDF.groupBy("Plate ID").count //we group by plate ID and count how many iteration we have of each plate ID
+    violationListDF.groupBy("Plate ID").count
   }
 
-  // Compute the number of violation that were made each day
   def dayCountDF(violationListDF : DataFrame) = {
-    violationListDF.groupBy("Issue Date").count //we group by the date and count how many iteration we have of each date
+    violationListDF.groupBy("Issue Date").count
   }
 
-  // Filter to only see the violations made at a specific date
   def violationsPerDay(violationListDF : DataFrame, DateSearched : String) = {
     violationListDF.filter(violationListDF("Issue Date") === DateSearched)
-  }
-    
-  // Function to filter the violations made at a specific time (during 2 hours defined by the user)
-  def violationPerHours(violationListDF : DataFrame, BeginningHour : Int, EndingHour : Int) = {
-    if (BeginningHour <= 12) {
-      val timeOfDay = violationListDF.filter(violationListDF("Violation Time").endsWith("A")) //We check that it is during the night/morning (AM)
-      timeOfDay
-        .filter(timeOfDay("Violation Time").substr(0,2) >= BeginningHour) //We filter so that the hours is greater than the beginning hour
-        .filter(timeOfDay("Violation Time").substr(0,2) < EndingHour) // We filter so that the hours are smaller than the ending hour
-    }else {
-      // if the values are greater than 12H, we are in the afternoon/night so we are in PM (and we substract 12 to go back english hours)
-      val BeginningHourAfter = BeginningHour - 12
-      val EndingHourAfter = EndingHour - 12
-
-      val timeOfDay = violationListDF.filter(violationListDF("Violation Time").endsWith("P")) //We check that it is during the afternoon/night (PM)
-      timeOfDay
-        .filter(timeOfDay("Violation Time").substr(0,2) >= BeginningHourAfter) //We filter so that the hours is greater than the beginning hour
-        .filter(timeOfDay("Violation Time").substr(0,2) < EndingHourAfter) // We filter so that the hours are smaller than the ending hour
-    }
   }
 }
 

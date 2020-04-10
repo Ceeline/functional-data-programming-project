@@ -15,21 +15,28 @@ object MyConsumer extends App {
    println("I consume")
   val gson = new Gson()
 
-  val exist = Files.exists(Paths.get("output.csv"))
+  val existViolation = Files.exists(Paths.get("violationDrone.csv"))
+  val existMessage = Files.exists(Paths.get("messageDrone.csv"))
   val existImage = Files.exists(Paths.get("image.csv"))
 
-  var outputMsgFile = new BufferedWriter(new FileWriter("output.csv", true))
+  var outputViolationFile = new BufferedWriter(new FileWriter("violationDrone.csv", true))
+  var outputMsgFile = new BufferedWriter(new FileWriter("messageDrone.csv", true))
   var outputImageFile = new BufferedWriter(new FileWriter("image.csv", true))
   val csvMsgWriter = new CSVWriter(outputMsgFile, ',','\u0000','\u0000',"\n")
   val csvImageWriter = new CSVWriter(outputImageFile, ',','\u0000','\u0000',"\n")
+  val csvViolationWriter = new CSVWriter(outputImageFile, ',','\u0000','\u0000',"\n")
 
-  if(exist == false){
+  if(existViolation == false){
     val csvFields = Array("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
-    csvMsgWriter.writeNext(csvFields.mkString(","))
+    csvViolationWriter.writeNext(csvFields.mkString(","))
   }
   if(existImage == false){
     val csvFields = Array("id_image","image")
     csvImageWriter.writeNext(csvFields.mkString(","))
+  }
+  if(existMessage == false){
+    val csvFields = Array("id_Drone","Date","Time", "latitude", "longitude")
+    csvMsgWriter.writeNext(csvFields.mkString(","))
   }
   
 
@@ -53,12 +60,19 @@ object MyConsumer extends App {
       for (record <- records.asScala) {
         val dronemsg = gson.fromJson(record.value().toString(), classOf[DroneMessage])
       
-          if(dronemsg != null && dronemsg.violationCode == -1){
+        if(dronemsg.violationCode == null){
+        //This is a regular message
+            val recordArrayString = dronemsg.toArray().mkString(",")
+            csvMsgWriter.writeNext(recordArrayString)
+
+        }else{
+
+          if(dronemsg.violationCode == -1){
             //The drone sends a Image
             var imageRecord = Array(dronemsg.id_image, dronemsg.image)
             csvImageWriter.writeNext(imageRecord.mkString(","))
           }else  {
-            if(dronemsg != null && dronemsg.violationCode == 1){
+            if(dronemsg.violationCode == -2){
             //The drone sends an alert
             println("ALERTE !! Men needed lat:" + dronemsg.latitude + " long: "+dronemsg.longitude)
             }
@@ -66,7 +80,8 @@ object MyConsumer extends App {
 
             // We write the message in the csv
             val recordArrayString = dronemsg.toArray().mkString(",")
-            csvMsgWriter.writeNext(recordArrayString)
+            csvViolationWriter.writeNext(recordArrayString)
+        }
         }
         i = i + 1
       }
@@ -74,10 +89,12 @@ object MyConsumer extends App {
   }catch{
     case e:Exception => {
       outputMsgFile.close()
+      outputViolationFile.close()
       outputImageFile.close()
       e.printStackTrace()}
   }finally {
     outputMsgFile.close()
+    outputViolationFile.close()
     outputImageFile.close()
     consumer.close()
   }
