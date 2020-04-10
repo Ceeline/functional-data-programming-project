@@ -13,8 +13,6 @@ libraryDependencies += "com.google.code.gson" % "gson" % "2.8.6"
 libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-core
-libraryDependencies += "org.apache.spark" %% "spark-core" % "3.0.0-preview2"
-
 libraryDependencies += "org.apache.spark" % "spark-sql_2.12" % "2.4.5"
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.5"
 
