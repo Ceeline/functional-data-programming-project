@@ -18,7 +18,8 @@ case class Drone(
   longitude: Double, 
   id_image: String, 
   violationCode: Integer, 
-  id_plate: String)
+  id_plate: String
+)
 
 object importCSV {
     
@@ -33,34 +34,21 @@ object importCSV {
 
     val sc = spark.sparkContext
     val filename = "/home/celia/Downloads/test.csv"
+    val fileDrone = "violationDrone.csv"
     
     // we get the RDD[String] containing the data of the file
     val (access_tickets) = parseTickets(filename, sc)
     
-
-    val rddCSV = spark.sparkContext.textFile("violationDrone.csv")
-
-    // type of val RDD :class org.apache.spark.rdd.MapPartitionsRDD
-    // We can use this RDD to make statistics
-    val rdd = rddCSV.map(line=>{
-      line.split(",")
-    })
-
-    rdd.foreach(f => {
-      println(f.mkString(" "))
-    })
-
-
-
-   /* val df_small_drone = rdd.toDF("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
+   val drones = parseDrones(fileDrone, sc)
+    val df_small_drone = drones.toDF("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
     
     violationCountDF(df_small_drone).show()
     recidivistCountDF(df_small_drone).show()
     dayCountDF(df_small_drone).show()
     violationsPerDay(df_small_drone, "07/20/2016").show()
-    violationPerHours(df_small, 2, 6).orderBy("Violation Time").show()
-    violationPerHours(df_small, 15, 20).orderBy("Violation Time").show()
-    */
+    violationPerHours(df_small_drone, 2, 6).orderBy("Violation Time").show()
+    violationPerHours(df_small_drone, 15, 20).orderBy("Violation Time").show()
+    
 
 
     val df_small = access_tickets.toDF("Plate ID", "Issue Date", "Violation Code", "Violation Time")
@@ -93,24 +81,24 @@ object importCSV {
     (access_tickets)
   }
 
-    /*def parseDrones(filename: String, sc: SparkContext): RDD[Drone] = {
+  def parseDrones(filename: String, sc: SparkContext): RDD[Drone] = {
 
     // Read and parse file 
     val drone : RDD[Drone] = sc
                       .textFile(filename)
                       .map(_.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1))      // split at each comma except commas in quotes
                       .map(x => {   // sorting: put 0 when not well-structured and 1 when valid
-                        if (x(1).equals("Plate ID") || x(1).contains(',') || x(4).contains(',') || x(19).contains(','))
+                        if (x(0).equals("id_Drone"))
                           (x, 0)
                         else
-                          (Ticket(x(1), x(4), x(5).toInt, x(19)),1)
+                          (Drone(x(0).toInt, x(1), x(2), x(3).toDouble,x(4).toDouble,x(5),x(6).toInt,x(7)),1)
                       })
                       .filter(s => s._2 == 1)   // only keep valid lines
-                      .map(s => s._1.asInstanceOf[Ticket])      //return RDD[Tickets]
+                      .map(s => s._1.asInstanceOf[Drone])      //return RDD[Drone]
 
-    println(s"Read ${access_tickets.count()} lines")
-    (access_tickets)
-  }*/
+    println(s"Read ${drone.count()} lines")
+    (drone)
+  }
 
   def violationCountDF(violationListDF : DataFrame) = {
     violationListDF.groupBy("Violation Code").count
