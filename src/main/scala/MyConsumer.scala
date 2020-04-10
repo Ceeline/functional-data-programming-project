@@ -24,7 +24,7 @@ object MyConsumer extends App {
   var outputImageFile = new BufferedWriter(new FileWriter("image.csv", true))
   val csvMsgWriter = new CSVWriter(outputMsgFile, ',','\u0000','\u0000',"\n")
   val csvImageWriter = new CSVWriter(outputImageFile, ',','\u0000','\u0000',"\n")
-  val csvViolationWriter = new CSVWriter(outputImageFile, ',','\u0000','\u0000',"\n")
+  val csvViolationWriter = new CSVWriter(outputViolationFile, ',','\u0000','\u0000',"\n")
 
   if(existViolation == false){
     val csvFields = Array("id_Drone","Issue Date","Violation Time", "latitude", "longitude","id_image", "Violation Code", "Plate ID")
